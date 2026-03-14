@@ -25,22 +25,18 @@
   "description": "",
   "dependencies": {
     "@hono/node-server": "^1.19.11",
-    "cheerio": "^1.2.0",
     "dotenv": "^17.3.1",
     "hono": "^4.12.8",
-    "pdf-parse": "^2.4.5",
     "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "@types/pdf-parse": "^1.1.5",
     "@types/pg": "^8.18.0",
     "eslint": "^10.0.3",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.0"
+    "typescript": "^5.9.3"
   }
 }
