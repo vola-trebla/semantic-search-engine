@@ -1,5 +1,4 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import { config, requireApiKey } from './config.js';
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { searchByVector } from './search/search.js';
@@ -22,8 +21,7 @@ app.post('/search', async (c) => {
     return c.json({ error: 'query is required' }, 400);
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return c.json({ error: 'GEMINI_API_KEY not configured' }, 500);
+  const apiKey = requireApiKey();
 
   const [embedded] = await embedChunks(
     [{ content: query, source: 'query', chunkIndex: 0, metadata: {} }],
@@ -48,8 +46,6 @@ app.post('/search', async (c) => {
   });
 });
 
-const port = parseInt(process.env.PORT || '3420');
-
-serve({ fetch: app.fetch, port }, () => {
-  console.log(`Semantic search server running on http://localhost:${port}`);
+serve({ fetch: app.fetch, port: config.port }, () => {
+  console.log(`Semantic search server running on http://localhost:${config.port}`);
 });

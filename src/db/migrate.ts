@@ -1,12 +1,8 @@
 import pg from 'pg';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const EMBEDDING_DIMENSIONS = 768; // Gemini gemini-embedding-001 (truncated via outputDimensionality)
+import { config } from '../config.js';
 
 async function migrate(): Promise<void> {
-  const client = new pg.Client(process.env.DATABASE_URL);
+  const client = new pg.Client(config.databaseUrl);
   await client.connect();
 
   try {
@@ -19,7 +15,7 @@ async function migrate(): Promise<void> {
       CREATE TABLE IF NOT EXISTS documents (
         id            SERIAL PRIMARY KEY,
         content       TEXT NOT NULL,
-        embedding     vector(${EMBEDDING_DIMENSIONS}),
+        embedding     vector(${config.embedding.dimensions}),
         source        TEXT NOT NULL,
         chunk_index   INTEGER NOT NULL,
         metadata      JSONB DEFAULT '{}',
@@ -32,7 +28,7 @@ async function migrate(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_documents_embedding
       ON documents
       USING ivfflat (embedding vector_cosine_ops)
-      WITH (lists = 100);
+      WITH (lists = ${config.db.ivfflatLists});
     `);
     console.log('✓ ivfflat index created');
 

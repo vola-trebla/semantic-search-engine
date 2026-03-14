@@ -1,20 +1,17 @@
 import pg from 'pg';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { config } from '../config.js';
+import { toVectorString } from '../utils/vector.js';
 
 async function verify(): Promise<void> {
-  const client = new pg.Client(process.env.DATABASE_URL);
+  const client = new pg.Client(config.databaseUrl);
   await client.connect();
 
   try {
-    // Check pgvector extension
     const extResult = await client.query(
       "SELECT extversion FROM pg_extension WHERE extname = 'vector';",
     );
     console.log(`✓ pgvector version: ${extResult.rows[0].extversion}`);
 
-    // Check documents table exists
     const tableResult = await client.query(`
       SELECT column_name, data_type
       FROM information_schema.columns
@@ -26,11 +23,10 @@ async function verify(): Promise<void> {
       console.log(`  - ${row.column_name} (${row.data_type})`);
     }
 
-    // Insert and search a test vector
-    const testVector = Array(768)
+    const testVector = Array(config.embedding.dimensions)
       .fill(0)
       .map((_, i) => (i % 2 === 0 ? 0.1 : -0.1));
-    const vectorStr = `[${testVector.join(',')}]`;
+    const vectorStr = toVectorString(testVector);
 
     await client.query(
       `INSERT INTO documents (content, embedding, source, chunk_index)
@@ -48,7 +44,6 @@ async function verify(): Promise<void> {
     );
     console.log(`✓ cosine search works — similarity: ${searchResult.rows[0].similarity}`);
 
-    // Cleanup
     await client.query("DELETE FROM documents WHERE source = 'verify-script';");
     console.log('✓ test data cleaned up');
 
