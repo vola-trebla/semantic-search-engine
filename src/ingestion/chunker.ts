@@ -1,6 +1,11 @@
 import type { Chunk } from '../types.js';
+import { config } from '../config.js';
 
-export function chunkText(text: string, source: string, maxChunkSize = 500): Chunk[] {
+export function chunkText(
+  text: string,
+  source: string,
+  maxChunkSize = config.chunking.maxChunkSize,
+): Chunk[] {
   const paragraphs = text.split(/\n\n+/).filter((p) => p.trim().length > 0);
   const chunks: Chunk[] = [];
   let current = '';

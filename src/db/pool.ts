@@ -1,11 +1,9 @@
 import pg from 'pg';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { config } from '../config.js';
 
 export const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
+  connectionString: config.databaseUrl,
+  max: config.db.poolMax,
 });
 
 pool.on('error', (err) => {
