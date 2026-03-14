@@ -10,6 +10,8 @@
     "search": "tsx src/cli.ts search",
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
@@ -35,6 +37,7 @@
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
   }
 }
