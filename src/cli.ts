@@ -2,7 +2,7 @@ import { requireApiKey } from './config.js';
 import { loadFromDirectory } from './ingestion/loader.js';
 import { embedChunks } from './providers/gemini.js';
 import { insertChunks, getDocumentCount } from './db/repository.js';
-import { searchByVector } from './search/search.js';
+import { hybridSearchWithQuery } from './search/search.js';
 
 async function ingest(dirPath: string): Promise<void> {
   const apiKey = requireApiKey();
@@ -42,7 +42,7 @@ async function search(query: string): Promise<void> {
     process.exit(1);
   }
 
-  const results = await searchByVector(embedded.embedding);
+  const results = await hybridSearchWithQuery(embedded.embedding, query);
 
   if (results.length === 0) {
     console.log('No results found');

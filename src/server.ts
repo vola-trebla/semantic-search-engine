@@ -1,7 +1,7 @@
 import { config, requireApiKey } from './config.js';
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
-import { searchByVector } from './search/search.js';
+import { searchByVector, hybridSearchWithQuery } from './search/search.js';
 import type { SearchOptions } from './search/search.js';
 import { embedChunks } from './providers/gemini.js';
 import { getDocumentCount } from './db/repository.js';
@@ -15,7 +15,7 @@ app.get('/health', async (c) => {
 
 app.post('/search', async (c) => {
   const body = await c.req.json();
-  const { query, topK, threshold, source } = body;
+  const { query, topK, threshold, source, mode } = body;
 
   if (!query || typeof query !== 'string') {
     return c.json({ error: 'query is required' }, 400);
@@ -31,11 +31,15 @@ app.post('/search', async (c) => {
 
   if (!embedded) return c.json({ error: 'embedding failed' }, 500);
 
-  const options: SearchOptions = { topK, threshold, source };
-  const results = await searchByVector(embedded.embedding, options);
+  const options: SearchOptions = { topK, threshold, source, mode };
+  const results =
+    mode === 'hybrid'
+      ? await hybridSearchWithQuery(embedded.embedding, query, options)
+      : await searchByVector(embedded.embedding, options);
 
   return c.json({
     query,
+    mode: mode ?? 'hybrid',
     count: results.length,
     results: results.map((r) => ({
       content: r.content,

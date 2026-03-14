@@ -38,6 +38,19 @@ async function migrate(): Promise<void> {
     `);
     console.log('✓ source index created');
 
+    await client.query(`
+      ALTER TABLE documents
+      ADD COLUMN IF NOT EXISTS tsv tsvector
+      GENERATED ALWAYS AS (to_tsvector('english', content)) STORED;
+    `);
+    console.log('✓ tsvector column added');
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_documents_tsv
+      ON documents USING gin(tsv);
+    `);
+    console.log('✓ GIN full-text index created');
+
     console.log('\nAll migrations completed ✓');
   } finally {
     await client.end();

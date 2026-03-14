@@ -17,6 +17,8 @@ export const config = {
   search: {
     defaultTopK: 5,
     defaultThreshold: 0.3,
+    vectorWeight: 0.7,
+    textWeight: 0.3,
   },
 
   chunking: {
