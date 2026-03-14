@@ -2,22 +2,40 @@ import { pool } from './pool.js';
 import type { EmbeddedChunk } from '../types.js';
 import { toVectorString } from '../utils/vector.js';
 
+const BATCH_SIZE = 50;
+
 export async function insertChunks(chunks: EmbeddedChunk[]): Promise<number> {
   let inserted = 0;
 
-  for (const chunk of chunks) {
-    await pool.query(
-      `INSERT INTO documents (content, embedding, source, chunk_index, metadata)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [
+  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+    const batch = chunks.slice(i, i + BATCH_SIZE);
+    const values: unknown[] = [];
+    const placeholders: string[] = [];
+
+    for (let j = 0; j < batch.length; j++) {
+      const chunk = batch[j];
+      if (!chunk) continue;
+      const offset = j * 5;
+      placeholders.push(
+        `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5})`,
+      );
+      values.push(
         chunk.content,
         toVectorString(chunk.embedding),
         chunk.source,
         chunk.chunkIndex,
         JSON.stringify(chunk.metadata),
-      ],
+      );
+    }
+
+    if (placeholders.length === 0) continue;
+
+    await pool.query(
+      `INSERT INTO documents (content, embedding, source, chunk_index, metadata)
+       VALUES ${placeholders.join(', ')}`,
+      values,
     );
-    inserted++;
+    inserted += batch.length;
   }
 
   return inserted;

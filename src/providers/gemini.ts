@@ -1,9 +1,20 @@
 import type { Chunk, EmbeddedChunk } from '../types.js';
 import { config } from '../config.js';
+import { LRUCache } from '../utils/cache.js';
 
 const GEMINI_EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/models/${config.embedding.model}:embedContent`;
 
+const embeddingCache = new LRUCache<number[]>(200, 10 * 60 * 1000);
+
+function cacheKey(text: string, taskType: string): string {
+  return `${taskType}:${text}`;
+}
+
 async function embedSingle(text: string, apiKey: string, taskType: string): Promise<number[]> {
+  const key = cacheKey(text, taskType);
+  const cached = embeddingCache.get(key);
+  if (cached) return cached;
+
   const response = await fetch(`${GEMINI_EMBED_URL}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -20,7 +31,10 @@ async function embedSingle(text: string, apiKey: string, taskType: string): Prom
   }
 
   const data = await response.json();
-  return data.embedding.values;
+  const embedding: number[] = data.embedding.values;
+
+  embeddingCache.set(key, embedding);
+  return embedding;
 }
 
 export async function embedChunks(
