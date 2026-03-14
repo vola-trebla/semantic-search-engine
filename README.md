@@ -163,7 +163,3 @@ scripts/
 - **taskType separation** — `RETRIEVAL_DOCUMENT` for ingestion, `RETRIEVAL_QUERY` for search queries, improves relevance
 - **Batch insert** — 50 rows per query instead of one-by-one for faster ingestion
 - **LRU embedding cache** — repeated queries skip the Gemini API call (200 entries, 10min TTL)
-
-## Part of
-
-[LLM Infrastructure Portfolio](https://github.com/vola-trebla/llm-infrastructure) — Project #6 (Tier 2). Builds on RAG Ingestion (#1), feeds into AI Chat App (#10).
