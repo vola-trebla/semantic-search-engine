@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const EMBEDDING_DIMENSIONS = 768; // Gemini text-embedding-004
+const EMBEDDING_DIMENSIONS = 768; // Gemini gemini-embedding-001 (truncated via outputDimensionality)
 
 async function migrate(): Promise<void> {
   const client = new pg.Client(process.env.DATABASE_URL);
