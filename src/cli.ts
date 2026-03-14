@@ -8,7 +8,7 @@ async function ingest(dirPath: string): Promise<void> {
   const apiKey = requireApiKey();
 
   console.log(`\nLoading files from ${dirPath}...`);
-  const chunks = loadFromDirectory(dirPath);
+  const chunks = await loadFromDirectory(dirPath);
   console.log(`Total chunks: ${chunks.length}\n`);
 
   if (chunks.length === 0) {
