@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semantic Search</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+      background: #0a0f0a;
+      color: #c8d6c8;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container { max-width: 800px; margin: 0 auto; }
+
+    h1 {
+      color: #4ade80;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #5a6e5a;
+      font-size: 0.8rem;
+      margin-bottom: 2rem;
+    }
+
+    .stats {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat {
+      background: #111a11;
+      border: 1px solid #1a2e1a;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      flex: 1;
+    }
+
+    .stat-value {
+      color: #4ade80;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .stat-label {
+      color: #5a6e5a;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    input {
+      flex: 1;
+      background: #111a11;
+      border: 1px solid #1a2e1a;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      color: #c8d6c8;
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: #4ade80; }
+    input::placeholder { color: #3a4e3a; }
+
+    button {
+      background: #4ade80;
+      color: #0a0f0a;
+      border: none;
+      border-radius: 6px;
+      padding: 0.75rem 1.5rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .control-group label {
+      color: #5a6e5a;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    select, .small-input {
+      background: #111a11;
+      border: 1px solid #1a2e1a;
+      border-radius: 4px;
+      padding: 0.4rem 0.6rem;
+      color: #c8d6c8;
+      font-family: inherit;
+      font-size: 0.75rem;
+      outline: none;
+    }
+
+    .small-input { width: 50px; text-align: center; }
+
+    .results { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .result {
+      background: #111a11;
+      border: 1px solid #1a2e1a;
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      transition: border-color 0.2s;
+    }
+
+    .result:hover { border-color: #2a4e2a; }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-source {
+      color: #5a6e5a;
+      font-size: 0.7rem;
+    }
+
+    .result-score {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+    }
+
+    .score-high { color: #4ade80; background: #0f1f0f; }
+    .score-mid { color: #facc15; background: #1f1a0f; }
+    .score-low { color: #6b7280; background: #151515; }
+
+    .result-content {
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: #9aaa9a;
+    }
+
+    .empty {
+      text-align: center;
+      color: #3a4e3a;
+      padding: 3rem;
+      font-size: 0.85rem;
+    }
+
+    .loading {
+      text-align: center;
+      color: #4ade80;
+      padding: 2rem;
+      font-size: 0.85rem;
+    }
+
+    .meta {
+      color: #3a4e3a;
+      font-size: 0.7rem;
+      margin-top: 1.5rem;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>&gt; semantic-search</h1>
+    <div class="subtitle">vector + full-text hybrid search engine</div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="doc-count">-</div>
+        <div class="stat-label">documents</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="status">-</div>
+        <div class="stat-label">status</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="latency">-</div>
+        <div class="stat-label">last query ms</div>
+      </div>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="query" placeholder="search by meaning..." autofocus />
+      <button id="search-btn" onclick="doSearch()">search</button>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>mode</label>
+        <select id="mode">
+          <option value="hybrid" selected>hybrid</option>
+          <option value="vector">vector</option>
+          <option value="text">text</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>top-k</label>
+        <input type="number" id="topk" class="small-input" value="5" min="1" max="20" />
+      </div>
+      <div class="control-group">
+        <label>threshold</label>
+        <input type="number" id="threshold" class="small-input" value="0.3" min="0" max="1" step="0.1" />
+      </div>
+    </div>
+
+    <div id="results" class="results">
+      <div class="empty">type a query to search</div>
+    </div>
+
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    async function loadHealth() {
+      try {
+        const res = await fetch('/health');
+        const data = await res.json();
+        $('doc-count').textContent = data.documents;
+        $('status').textContent = data.status;
+        $('status').style.color = '#4ade80';
+      } catch {
+        $('status').textContent = 'error';
+        $('status').style.color = '#ef4444';
+      }
+    }
+
+    async function doSearch() {
+      const query = $('query').value.trim();
+      if (!query) return;
+
+      const btn = $('search-btn');
+      btn.disabled = true;
+      $('results').innerHTML = '<div class="loading">searching...</div>';
+
+      const start = performance.now();
+
+      try {
+        const res = await fetch('/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query,
+            mode: $('mode').value,
+            topK: parseInt($('topk').value),
+            threshold: parseFloat($('threshold').value),
+          }),
+        });
+
+        const data = await res.json();
+        const ms = Math.round(performance.now() - start);
+        $('latency').textContent = ms;
+
+        if (data.results.length === 0) {
+          $('results').innerHTML = '<div class="empty">no results found</div>';
+          $('meta').textContent = '';
+          return;
+        }
+
+        $('results').innerHTML = data.results.map((r) => {
+          const scoreClass = r.similarity >= 0.7 ? 'score-high'
+            : r.similarity >= 0.4 ? 'score-mid' : 'score-low';
+          return `
+            <div class="result">
+              <div class="result-header">
+                <span class="result-source">${r.source}</span>
+                <span class="result-score ${scoreClass}">${r.similarity.toFixed(3)}</span>
+              </div>
+              <div class="result-content">${escapeHtml(r.content)}</div>
+            </div>
+          `;
+        }).join('');
+
+        $('meta').textContent = `${data.count} results | mode: ${data.mode} | ${ms}ms`;
+      } catch (err) {
+        $('results').innerHTML = `<div class="empty">error: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    $('query').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doSearch();
+    });
+
+    loadHealth();
+  </script>
+</body>
+</html>
