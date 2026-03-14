@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { config, requireApiKey } from './config.js';
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
@@ -6,7 +9,14 @@ import type { SearchOptions } from './search/search.js';
 import { embedChunks } from './providers/gemini.js';
 import { getDocumentCount } from './db/repository.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const dashboardHtml = fs.readFileSync(path.join(__dirname, 'dashboard/index.html'), 'utf-8');
+
 const app = new Hono();
+
+app.get('/', (c) => {
+  return c.html(dashboardHtml);
+});
 
 app.get('/health', async (c) => {
   const count = await getDocumentCount();
